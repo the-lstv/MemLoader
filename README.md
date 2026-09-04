@@ -8,6 +8,28 @@ It ships with two independent loaders:
 
 Both loaders can be built either as a console **EXE** or as a **DLL**.
 
+## Node.js addon (pe-loader)
+
+You can also build **pe-loader** as a native Node addon (`.node`) exposing `run(path, args?)`.
+
+```powershell
+npm install
+npm run build
+```
+
+Addon output:
+
+- `memloader.node` (copied from `build/Release/memloader.node`)
+
+Example:
+
+```js
+const loader = require("./memloader.node");
+loader.run("C:\\path\\target.exe");
+// optional arguments forwarded to target command line:
+// loader.run("C:\\path\\target.exe", "arg1 arg2");
+```
+
 ---
 ## Features
 

@@ -1,0 +1,14 @@
+{
+  "name": "memloader-addon",
+  "version": "1.0.0",
+  "description": "Node.js addon wrapper for MemLoader pe-loader",
+  "main": "memloader.node",
+  "gypfile": true,
+  "scripts": {
+    "build": "node-gyp rebuild && node -e \"require('node:fs').copyFileSync('build/Release/memloader.node','memloader.node')\"",
+    "rebuild": "node-gyp rebuild && node -e \"require('node:fs').copyFileSync('build/Release/memloader.node','memloader.node')\""
+  },
+  "devDependencies": {
+    "node-gyp": "^10.2.0"
+  }
+}
