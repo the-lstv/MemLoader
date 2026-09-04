@@ -18,18 +18,25 @@ jobs:
         run: |
           msbuild Common\Common.vcxproj ^
             /t:Rebuild ^
-            /p:Configuration=Dll ^
+            /p:Configuration=Release ^
             /p:Platform=x64 ^
             /p:OutDir=%CD%\x64\Release\
-            /m
       
-      - name: Build loaders
+      - name: Build PE loader
         shell: cmd
         run: |
-          msbuild MemLoader.sln ^
-            /p:Configuration=Dll ^
+          msbuild pe-loader\pe-loader.vcxproj ^
+            /p:Configuration=Release ^
             /p:Platform=x64 ^
-            /m
+            /p:OutDir=%CD%\x64\Release\
+      
+      - name: Build .NET loader
+        shell: cmd
+        run: |
+          msbuild dotnet-loader\dotnet-loader.vcxproj ^
+            /p:Configuration=Release ^
+            /p:Platform=x64 ^
+            /p:OutDir=%CD%\x64\Release\
 
       - name: Collect artifacts
         uses: actions/upload-artifact@v4
