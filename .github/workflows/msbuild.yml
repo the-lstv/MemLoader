@@ -1,4 +1,4 @@
-name: Build
+name: Build MemLoader
 
 on:
   workflow_dispatch:
@@ -8,22 +8,20 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: egor-tensin/setup-clang@v2
-        with:
-          platform: x64
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
       - name: Build
         shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          clang-cl --version
-          cmake -S . -B build
-          cmake --build build --config Dll
+          msbuild MemLoader.sln /p:Configuration=Dll /p:Platform=x64 /m
 
-      - name: Upload
+      - name: Collect artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build
+          name: MemLoader-x64
           path: |
-            build/**/*.dll
-            build/**/*.exe
+            **\Release\*.dll
+            **\Release\*.exe
