@@ -17,8 +17,10 @@ jobs:
         shell: cmd
         run: |
           msbuild Common\Common.vcxproj ^
+            /t:Rebuild ^
             /p:Configuration=Dll ^
             /p:Platform=x64 ^
+            /p:OutDir=%CD%\x64\Release\
             /m
       
       - name: Build loaders
