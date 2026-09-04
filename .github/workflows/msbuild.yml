@@ -1,4 +1,4 @@
-name: Build MemLoader
+name: Build memloader
 
 on:
   workflow_dispatch:
@@ -10,38 +10,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
-      - name: Build Common
-        shell: cmd
-        run: |
-          msbuild Common\Common.vcxproj ^
-            /t:Rebuild ^
-            /p:Configuration=Dll ^
-            /p:Platform=x64 ^
-            /p:OutDir=%CD%\x64\Release\
-      
-      - name: Build PE loader
-        shell: cmd
-        run: |
-          msbuild pe-loader\pe-loader.vcxproj ^
-            /p:Configuration=Dll ^
-            /p:Platform=x64 ^
-            /p:OutDir=%CD%\x64\Release\
-      
-      - name: Build .NET loader
-        shell: cmd
-        run: |
-          msbuild dotnet-loader\dotnet-loader.vcxproj ^
-            /p:Configuration=Dll ^
-            /p:Platform=x64 ^
-            /p:OutDir=%CD%\x64\Release\
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Collect artifacts
+      - name: Build native addon
+        run: npm run build
+
+      - name: Upload memloader.node
         uses: actions/upload-artifact@v4
         with:
-          name: MemLoader-x64
+          name: memloader-win32-x64
+          path: memloader.node
+          if-no-files-found: error
+      - name: Upload native binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-build
           path: |
-            **\Release\*.dll
-            **\Release\*.exe
+            **/*.dll
+            **/*.exe
+            **/*.lib
+          if-no-files-found: warn
