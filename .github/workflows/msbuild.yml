@@ -13,10 +13,21 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build
+      - name: Build Common
         shell: cmd
         run: |
-          msbuild MemLoader.sln /p:Configuration=Dll /p:Platform=x64 /m
+          msbuild Common\Common.vcxproj ^
+            /p:Configuration=Dll ^
+            /p:Platform=x64 ^
+            /m
+      
+      - name: Build loaders
+        shell: cmd
+        run: |
+          msbuild MemLoader.sln ^
+            /p:Configuration=Dll ^
+            /p:Platform=x64 ^
+            /m
 
       - name: Collect artifacts
         uses: actions/upload-artifact@v4
