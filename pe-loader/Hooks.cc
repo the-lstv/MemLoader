@@ -182,6 +182,14 @@ wchar_t** CmdLineToArgsW(
 	wchar_t** ArgsLine = (wchar_t**)malloc(sizeof(wchar_t*) * (*NbrOfArgs));
 	if (!ArgsLine)
 		return nullptr;
+	memset(ArgsLine, 0, sizeof(wchar_t*) * (*NbrOfArgs));
+
+	ArgsLine[0] = (wchar_t*)malloc(sizeof(wchar_t));
+	if (!ArgsLine[0])
+	{
+		return nullptr;
+	}
+	ArgsLine[0][0] = L'\0';
 
 	int argIndex = 1;
 	int i = 0;
@@ -238,6 +246,14 @@ char** CmdLineToArgsA(char* ArgsA, int* NbrOfArgs)
 	char** ArgsLine = (char**)malloc(sizeof(char*) * (*NbrOfArgs));
 	if (!ArgsLine)
 		return nullptr;
+	memset(ArgsLine, 0, sizeof(char*) * (*NbrOfArgs));
+
+	ArgsLine[0] = (char*)malloc(1);
+	if (!ArgsLine[0])
+	{
+		return nullptr;
+	}
+	ArgsLine[0][0] = '\0';
 
 	int argIndex = 1;
 	int i = 0;
@@ -273,14 +289,19 @@ bool InitArgs(
 {
 	int ArgsSize = Hashing::StringLengthA(ArgsA);
 
-	wchar_t* ArgsW = (wchar_t*)malloc((ArgsSize + 1) * ArgsSize);
-	memset(ArgsW, 0, (ArgsSize + 1) * ArgsSize);
-	MultiByteToWideChar(CP_UTF8, 0, ArgsA, -1, ArgsW, ArgsSize);
+	::ArgsA = ArgsA;
+	::ArgsW = (wchar_t*)malloc(sizeof(wchar_t) * (ArgsSize + 1));
+	if (!::ArgsW)
+	{
+		return false;
+	}
+	memset(::ArgsW, 0, sizeof(wchar_t) * (ArgsSize + 1));
+	MultiByteToWideChar(CP_UTF8, 0, ArgsA, -1, ::ArgsW, ArgsSize + 1);
 
 	int nbrOfArgs = 0;
 
 	ArgsCmdA = CmdLineToArgsA(ArgsA, &nbrOfArgs);
-	ArgsCmdW = CmdLineToArgsW(ArgsW, &nbrOfArgs);
+	ArgsCmdW = CmdLineToArgsW(::ArgsW, &nbrOfArgs);
 
 	LenArg = nbrOfArgs;
 
@@ -294,7 +315,6 @@ bool InitArgs(
 
 	return true;
 }
-
 
 
 
