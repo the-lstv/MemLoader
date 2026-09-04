@@ -18,7 +18,7 @@ jobs:
         run: |
           msbuild Common\Common.vcxproj ^
             /t:Rebuild ^
-            /p:Configuration=Release ^
+            /p:Configuration=Dll ^
             /p:Platform=x64 ^
             /p:OutDir=%CD%\x64\Release\
       
@@ -26,7 +26,7 @@ jobs:
         shell: cmd
         run: |
           msbuild pe-loader\pe-loader.vcxproj ^
-            /p:Configuration=Release ^
+            /p:Configuration=Dll ^
             /p:Platform=x64 ^
             /p:OutDir=%CD%\x64\Release\
       
@@ -34,7 +34,7 @@ jobs:
         shell: cmd
         run: |
           msbuild dotnet-loader\dotnet-loader.vcxproj ^
-            /p:Configuration=Release ^
+            /p:Configuration=Dll ^
             /p:Platform=x64 ^
             /p:OutDir=%CD%\x64\Release\
 
